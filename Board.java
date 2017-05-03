@@ -1,3 +1,8 @@
+/**
+ * Class represents the board state
+ * @author Jane Hoh (hohj) and Sampada Sakpal (sakpals)
+ *
+ */
 
 public class Board {
 	
@@ -71,8 +76,12 @@ public class Board {
 				char token=state[i][j];
 				if(token=='H') {
 					/* looking to the right */
-					if(j!=N-1 && state[i][j+1]=='+' ){
+					if(j!=N-1 && state[i][j+1]=='+'){
 							this.numHMoves++;	
+					}
+					/* looking to move off board */
+					if(j == N-1) {
+						this.numHMoves ++;
 					}
 					/* looking up */
 					if(i !=0 && state[i-1][j]=='+'){
@@ -80,11 +89,7 @@ public class Board {
 					}
 					/* looking down */
 					if(i !=N-1 && state[i+1][j]=='+'){
-						if(i == N-1 && j == 0){ 
-							// do nothing
-						}else {
 							this.numHMoves++;
-						}
 					}
 				}else if(token=='V'){
 					/* looking to the right */
@@ -95,13 +100,13 @@ public class Board {
 					if(i !=0 && state[i-1][j]=='+'){
 						this.numVMoves++;
 					}
+					/* looking to move off board */
+					if(i==0) {
+						this.numVMoves ++;
+					}
 					/* looking left */
 					if(j != 0 && state[i][j-1]=='+'){
-						if(j==0 && i==N-1){ 
-							// do nothing
-						}else{
-							this.numVMoves++;
-						}
+						this.numVMoves++;
 					}
 				}
 			}
