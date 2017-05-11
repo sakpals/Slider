@@ -30,12 +30,12 @@ public class KatsuCat implements SliderPlayer{
 		 * (0,0) corresponds to the bottom left corner */
 		while(boardReader.hasNext()) {
 			katsuBoard[dimension-1-y][x] = boardReader.next().charAt(0);
-			System.out.print(katsuBoard[dimension-1-y][x]+" ");
+			//System.out.print(katsuBoard[dimension-1-y][x]+" ");
 			x++;
 			if(x==dimension){
 				x=0;
 				y++;
-				System.out.println();
+				//System.out.println();
 			}
 		}
 		
@@ -65,13 +65,13 @@ public class KatsuCat implements SliderPlayer{
 					//pick up the piece and move it (free the spot)
 					
 					case UP:
-						if(player != 'V') {
+						if(y!=oldBoard.length-1) {
 							board[y+1][x] = player;
 						}
 						/* else it moves off the board - Goal:(*/
 						break;
 					case RIGHT:
-						if(player != 'H') {
+						if(x!=oldBoard.length-1) {
 							board[y][x+1] = player;
 						}
 						/* else it moves off the board - Goal:(*/
@@ -104,85 +104,71 @@ public class KatsuCat implements SliderPlayer{
 		
 	}
 	// inner class :O for the possible states of the board and its details
-	private class PossibleState {
+	/*public class PossibleState {
 		private int value;
 		char[][] board;
 		Move move;
+		PossibleState parent;
 		
-		PossibleState(int v, char[][] b, Move m){
+		PossibleState(int v, char[][] b, Move m, PossibleState p){
 			board=b;
 			value=v;
 			move=m;
+			parent = p;
 		}
-	}
+	}*/
 	@Override
 	public Move move() {
-		
+		int val = evaluation(katsuBoard);
+		PossibleState parent = new PossibleState(val, katsuBoard, null);
+		// expand parent
+		// check max
+		// find the most profitable move
 		
 		return null;
 	}
 	
-	public PossibleState maxUpdate(char[][] givenBoard) {
-		char[][] board;
-		ArrayList<Move> possibleMoves = findMoves(givenBoard);
-		PossibleState bestState=null;
+	public ArrayList<PossibleState> expand(PossibleState parent){
+		ArrayList<Move> possibleMoves = findMoves(parent.board);
 		
-		// make a replica of the board
-		board = copyBoard(givenBoard);
 		for(Move m: possibleMoves) {
+			char[][] newBoard = copyBoard(parent.board);
 			
-			//add state constructor
-			char[][] updatedBoard= updateBoard(board,m,katsuPlayer);
-			int value = evaluation(updatedBoard);
-			
-			// updating the best State if its better
-			if(bestState==null){
-				bestState = new PossibleState(value, updatedBoard, m);
-			}
-			else {
-				if(value > bestState.value) {
-					bestState.value = value;
-					bestState.board = updatedBoard;
-					bestState.move = m;
-				}
-			}
+			newBoard = updateBoard(newBoard, m, katsuPlayer);
+			int val = evaluation(newBoard);
+			PossibleState newState = new PossibleState(val, newBoard, m);
+			parent.addChild(newState);
 			
 		}
-		return bestState;
-		
+		return parent.children;
+	}
+	
+	public void printBoard(char[][] board) {
+		for(int y = 0; y < board.length; y++) {
+			for(int x = 0; x < board.length; x++) {
+				System.out.print(board[board.length-1-y][x]+" ");
+			}
+			System.out.println();
+		}
+		System.out.println();
+	}
+	public void maxUpdate(PossibleState parent) {
+		for(PossibleState child: parent.children) {
+			if(child.value > parent.value) {
+				parent.value = child.value;
+			}
+		}	
 	}
 	
 	
 	
 	
-	public PossibleState minUpdate(char[][] givenBoard) {
-		char[][] board;
-		ArrayList<Move> possibleMoves = findMoves(givenBoard);
-		PossibleState bestState=null;
-		
-		// make a replica of the board
-		board = copyBoard(givenBoard);
-		for(Move m: possibleMoves) {
-			
-			//add state constructor
-			char[][] updatedBoard= updateBoard(board,m,opponent);
-			int value = evaluation(updatedBoard);
-			
-			// updating the best State if its better
-			if(bestState==null){
-				bestState = new PossibleState(value, updatedBoard, m);
+	public void minUpdate(PossibleState parent) {
+		for(PossibleState child: parent.children) {
+			if(child.value < parent.value) {
+				parent.value = child.value;
 			}
-			else {
-				if(value < bestState.value) {
-					bestState.value = value;
-					bestState.board = updatedBoard;
-					bestState.move = m;
-				}
-			}
-			
-		}
-		return bestState;
-		
+		}	
 	}
 	
 	public ArrayList<Move> findMoves(char[][] board) {
@@ -191,7 +177,7 @@ public class KatsuCat implements SliderPlayer{
 			for(int x = 0; x < N; x++) {
 				if(board[y][x] == 'H' && katsuPlayer == 'H') {
 					// it can go up, right, down
-					System.out.println("found h");
+					//System.out.println("found h");
 					// if can go up
 					if((y != N-1) && (board[y+1][x] == '+')) {
 						possibleMoves.add(new Move(y,x,Move.Direction.UP));
@@ -209,7 +195,8 @@ public class KatsuCat implements SliderPlayer{
 				else if(board[y][x] == 'V'  && katsuPlayer == 'V'){
 					// it can go up, right, left
 					System.out.println("found v");
-					// if can go up
+					// if can go up, if its moving off the board, or theres a
+					// free spot above
 					if((y == N-1) || (board[y+1][x] == '+')) {
 						possibleMoves.add(new Move(y,x,Move.Direction.UP));
 					}
@@ -240,7 +227,7 @@ public class KatsuCat implements SliderPlayer{
 		}
 	}
 	
-	private int evaluation(char[][] board) {
+	public int evaluation(char[][] board) {
 		/* if H is the player, then the value stays the same,
 		 * or else its the opposite */
 		if(katsuPlayer == 'H') {
@@ -259,7 +246,7 @@ public class KatsuCat implements SliderPlayer{
 	/** 
 	 * Counts the number of blocked tokens for a given player
 	 * @param player the player that is currently being evaluated
-	 * @return 
+	 * @return the blocked evaluation w/r/t H
 	 */
 	private int blockedEvaluation(char[][] board) {
 		int value = 0;
@@ -288,6 +275,11 @@ public class KatsuCat implements SliderPlayer{
 		return value;
 	}
 	
+	/** 
+	 * Calculates the desirability of the distance left to move off the board
+	 * @param board
+	 * @return the distance evaluation w/r/t H
+	 */
 	private int distanceEvaluation(char[][] board) {
 		int value = 0; 
 		/* calculates the evaluation for H */
@@ -307,6 +299,12 @@ public class KatsuCat implements SliderPlayer{
 		
 	}
 	
+	/**
+	 * Calculates the number of player tokens left, the less for H
+	 * or the more for V, the better
+	 * @param board
+	 * @return the number of tokens evaluation w/r/t H
+	 */
 	private int numTokens(char[][] board) {
 		int value = 0; 
 		/* calculates the evaluation for H */

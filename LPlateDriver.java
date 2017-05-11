@@ -1,37 +1,25 @@
+import java.util.ArrayList;
 import java.util.Scanner;
+
 
 public class LPlateDriver {
 
 	public static void main(String[] args) {
+		
 		char[][] katsuBoard;
 		Scanner boardReader;
 		int dimension = 4;
-		String board = "+ H V +\n+ H V +\n+ H V +\n+ + + +\n";
+		String board = "H + + +\nH + + +\nH + + +\n+ V V V\n";
 		katsuBoard = new char[dimension][dimension];
 		boardReader = new Scanner(board);
 		KatsuCat cat = new KatsuCat();
 		Move move = new Move(1,1,Move.Direction.DOWN);
 		
 		/*cat init*/
-		 cat.init(dimension, board, 'H');
-		
-		
-		/*for(int i = 0; i < dimension; i++){
-			for(int j = 0; j <dimension; j++) {
-				boardReader.useDelimiter("\n");
-				if(boardReader.hasNext()) {
-					for(int k = 0; k < dimension; k++) {
-						katsuBoard[i][j] = boardReader.next().charAt(k);
-						System.out.println(boardReader.next());
-					}
-					
-					
-					
-				}
-				
-			}
-		}*/
-		
+		 cat.init(dimension, board, 'V');
+
+		 
+		System.out.println("storing the board");
 		int y=0;
 		int x=0;
 		while(boardReader.hasNext()) {
@@ -52,48 +40,28 @@ public class LPlateDriver {
 		
 		System.out.println();
 		
+		int val = cat.evaluation(katsuBoard);
 		
-		System.out.println("printing out katsu board");
-		for(int ik = 0; ik < dimension; ik++){
-			for(int jk = 0; jk <dimension; jk++) {
-				System.out.print(katsuBoard[ik][jk] + " ");
-				
+		PossibleState parent = new PossibleState(val, katsuBoard, null);
+		ArrayList<PossibleState> n = cat.expand(parent);
+		System.out.println(parent.value );
+		System.out.println(n.size());
+		System.out.println("printing out possible states");
+		
+		for(int i = 0; i < n.size(); i ++){
+			System.out.println("printing for "+i);
+			System.out.println(n.get(i).value );
+
+			System.out.println("printing out exp board");
+			for(int ik = 0; ik < dimension; ik++){
+				for(int jk = 0; jk <dimension; jk++) {
+					System.out.print(n.get(i).board[dimension-1-ik][jk] + " ");
+					
+				}
+				System.out.println();
 			}
-			System.out.println();
+			
 		}
-		
-		
-		
-		char[][] newBoard = cat.copyBoard(katsuBoard);
-		System.out.println("printing out new board");
-		for(int ik = 0; ik < dimension; ik++){
-			for(int jk = 0; jk <dimension; jk++) {
-				System.out.print(newBoard[ik][jk] + " ");
-				
-			}
-			System.out.println();
-		}
-		
-		cat.updateBoard(katsuBoard,move,'H');
-		
-		System.out.println("printing out katsu board");
-		for(int ik = 0; ik < dimension; ik++){
-			for(int jk = 0; jk <dimension; jk++) {
-				System.out.print(katsuBoard[ik][jk] + " ");
-				
-			}
-			System.out.println();
-		}
-		
-		System.out.println("printing out new board");
-		for(int ik = 0; ik < dimension; ik++){
-			for(int jk = 0; jk <dimension; jk++) {
-				System.out.print(newBoard[ik][jk] + " ");
-				
-			}
-			System.out.println();
-		}
-		
 
 		
 		
