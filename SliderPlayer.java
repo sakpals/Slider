@@ -9,7 +9,7 @@
  * created for COMP30024 Artificial Intelligence 2017
  * by Matt Farrugia <matt.farrugia@unimelb.edu.au>
  */
-package aiproj.slider;
+//package aiproj.slider;
 
 /**
  * Slider game player interface specification. Your program should implement
@@ -18,7 +18,7 @@ package aiproj.slider;
 public interface SliderPlayer {
 
 	/** 
-	 * Prepare a newly created SliderPlayer to play a game of Slideron a given
+	 * Prepare a newly created SliderPlayer to play a game of Slider on a given
 	 * board, as a given player.
 	 * 
 	 * @param dimension The width and height of the board in cells

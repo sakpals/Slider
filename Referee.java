@@ -7,7 +7,7 @@
  * created for COMP30024 Artificial Intelligence 2017
  * by Matt Farrugia <matt.farrugia@unimelb.edu.au>
  */
-package aiproj.slider;
+//package aiproj.slider;
 
 /** 
  * Referee class: Driver for a game of Slider
@@ -76,6 +76,7 @@ public class Referee {
 			timer.start();
 			players[turn].update(previousMove);
 			previousMove = players[turn].move();
+
 			times[turn] += timer.clock();
 
 			// validate and perform move
@@ -104,6 +105,7 @@ public class Referee {
 			System.out.println(" horizontal ~"+ times[Player.H]/1000000 +"ms");
 			System.out.println(" vertical   ~"+ times[Player.V]/1000000 +"ms");
 		} else {
+			//System.out.println("player :"+ Player.pieces[turn]);
 			System.out.println("illegal move: "
 				+ (turn==Player.H ? "horizontal" : "vertical"));
 			System.out.println(" " + message);
@@ -268,17 +270,20 @@ public class Referee {
 				// we better just check that there are really no legal moves
 				for (int i = 0; i < n; i++) {
 					for (int j = 0; j < n; j++) {
+						System.out.println(grid[i][j]+ " ");
 						if (grid[i][j] == turn && canMove(i, j)) {
 							throw new IllegalMoveException(
 									"can't pass, moves remain!");
 						}
 					}
+					System.out.println();
 				}
 
 				// if we make it here, there were no legal moves: pass is legal
 				passes++;
 				return;
 			} else {
+				
 				// we haven't seen a pass, so reset pass counter
 				passes = 0;
 			}
