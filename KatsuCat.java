@@ -1,7 +1,6 @@
+
 import java.util.ArrayList;
 import java.util.Scanner;
-
-
 
 public class KatsuCat implements SliderPlayer{
 	
@@ -10,6 +9,11 @@ public class KatsuCat implements SliderPlayer{
 	private char katsuPlayer;
 	private char opponent;
 	private int N;
+	private int numPlayerTokens;
+	private Move prev; //the last move this player made
+	private Move prev2; //the second last move this player made
+	public final static int maxInt = 2147483647;
+	
 	
 	public KatsuCat() {
 		
@@ -22,6 +26,9 @@ public class KatsuCat implements SliderPlayer{
 		katsuPlayer = player;
 		opponent = getOpponent();
 		N = dimension;
+		numPlayerTokens = dimension-1;
+		prev=null;
+		prev=null;
 	
 		int x=0;
 		int y=0;
@@ -52,8 +59,14 @@ public class KatsuCat implements SliderPlayer{
 		// TODO Auto-generated method stub
 		// i == y
 				// j == x
-				int x=move.j;
-				int y=move.i;
+		
+		// to account for the case in which the opponent passes, or hasn't
+		// made a move yet
+		if(move == null) {
+			return oldBoard;
+		}
+				int x=move.i;//move.j;
+				int y=move.j;//move.i;
 				char[][] board = copyBoard(oldBoard);
 				
 				
@@ -99,7 +112,7 @@ public class KatsuCat implements SliderPlayer{
 						System.out.println("Bad move bro...");
 						break;
 				}
-				
+		//printBoard(board);
 		return board;
 		
 	}
@@ -119,15 +132,93 @@ public class KatsuCat implements SliderPlayer{
 	}*/
 	@Override
 	public Move move() {
+		int currMax;
+		Move bestMove = null;
+		Move repeatedMove = null;
 		int val = evaluation(katsuBoard);
 		PossibleState parent = new PossibleState(val, katsuBoard, null);
-		// expand parent
-		// check max
-		// find the most profitable move
 		
-		return null;
+		ArrayList<PossibleState> katsuPlayerMoves;
+		 
+		katsuPlayerMoves = alphaBeta(parent);
+
+		// check max
+		if(!katsuPlayerMoves.isEmpty()) {
+			// just for now, pretend that the first move is the
+			// best till we find a better one
+			currMax = katsuPlayerMoves.get(0).value;
+			bestMove = katsuPlayerMoves.get(0).move;
+			for(PossibleState katsuMove: katsuPlayerMoves) {
+				if(katsuMove.value > currMax) {
+					currMax = katsuMove.value;
+					bestMove = katsuMove.move;
+				}
+				/*if(katsuMove.value > currMax) {
+					if(sameMove(prev2,katsuMove.move)){
+						repeatedMove = katsuMove.move;
+					}else{
+						currMax = katsuMove.value;
+						bestMove = katsuMove.move;
+					}
+				}*/
+			}
+			
+			//only repeat a move if you have no other choice
+			//if(bestMove==null){
+				//bestMove = repeatedMove;
+			//}
+			
+			// update the board to reflect the move your about to make
+			//System.out.println("best move is ... "+bestMove.toString());
+			//katsuBoard = updateBoard(katsuBoard, bestMove, katsuPlayer);
+		//	printBoard(katsuBoard);
+			//prev2=prev;
+			//prev=bestMove;
+			
+		}
+		
+		return bestMove;
+
 	}
 	
+	public ArrayList<PossibleState> alphaBeta(PossibleState parent) {
+		int moveVal; // the max for that particular move from parent
+		int depthOneMax = Integer.MIN_VALUE;
+		int val;
+		char[][] newBoard;
+		char[][] oppNewBoard;
+		ArrayList<Move> possibleMoves = findMoves(parent.board);
+		ArrayList<Move> opponentMoves;
+		for(Move m: possibleMoves) {
+		
+			newBoard = copyBoard(parent.board);
+			
+			newBoard = updateBoard(newBoard, m, katsuPlayer);
+			moveVal = Integer.MAX_VALUE;
+			
+			PossibleState newState = new PossibleState(moveVal, newBoard, m);
+			opponentMoves = findMoves(newState.board);
+			
+			for(Move opp: opponentMoves) {
+				oppNewBoard = copyBoard(newState.board);
+				
+				oppNewBoard = updateBoard(oppNewBoard, opp, opponent);
+				val = evaluation(oppNewBoard);
+				if(val < moveVal) {
+					moveVal = val;
+				}
+				if(val < depthOneMax) {
+					break;
+				}
+			}
+			if(moveVal > depthOneMax) {
+				depthOneMax = moveVal;
+			}
+			parent.addChild(newState);
+		}
+		return parent.children;
+		
+	}
 	public ArrayList<PossibleState> expand(PossibleState parent){
 		ArrayList<Move> possibleMoves = findMoves(parent.board);
 		
@@ -136,9 +227,11 @@ public class KatsuCat implements SliderPlayer{
 			
 			newBoard = updateBoard(newBoard, m, katsuPlayer);
 			int val = evaluation(newBoard);
-			PossibleState newState = new PossibleState(val, newBoard, m);
-			parent.addChild(newState);
 			
+		
+			//PossibleState newState = new PossibleState(val, newBoard, m);
+			//parent.addChild(newState);
+			parent.addChild(new PossibleState(val, newBoard, m));
 		}
 		return parent.children;
 	}
@@ -146,7 +239,8 @@ public class KatsuCat implements SliderPlayer{
 	public void printBoard(char[][] board) {
 		for(int y = 0; y < board.length; y++) {
 			for(int x = 0; x < board.length; x++) {
-				System.out.print(board[board.length-1-y][x]+" ");
+				//System.out.print(board[board.length-1-y][x]+" ");
+				System.out.print(board[y][x]+" ");
 			}
 			System.out.println();
 		}
@@ -171,43 +265,64 @@ public class KatsuCat implements SliderPlayer{
 		}	
 	}
 	
+	private boolean sameMove(Move a, Move b){
+		
+		if(a==null||b==null){
+			return false;
+		}
+		
+		if(a.i==b.i && a.j==b.j && a.d==b.d){
+			return true;
+		}
+		return false;
+	}
+	
 	public ArrayList<Move> findMoves(char[][] board) {
 		ArrayList<Move> possibleMoves = new ArrayList<Move>();
+		Move move;
 		for(int y = 0; y < N; y++) {
 			for(int x = 0; x < N; x++) {
+				
+								
 				if(board[y][x] == 'H' && katsuPlayer == 'H') {
 					// it can go up, right, down
 					//System.out.println("found h");
 					// if can go up
 					if((y != N-1) && (board[y+1][x] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.UP));
+						move=new Move(x,y,Move.Direction.UP);
+						possibleMoves.add(move);
 					}
 					// if can go right
 					if((x == N-1) || (board[y][x+1] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.RIGHT));
+						move=new Move(x,y,Move.Direction.RIGHT);
+						possibleMoves.add(move);
 					}
 						
 					// if can go down
 					if((y != 0) && (board[y-1][x] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.DOWN));
+						move=new Move(x,y,Move.Direction.DOWN);
+						possibleMoves.add(move);
 					}
 				}
 				else if(board[y][x] == 'V'  && katsuPlayer == 'V'){
 					// it can go up, right, left
-					System.out.println("found v");
-					// if can go up, if its moving off the board, or theres a
+					//System.out.println("found v");
+					// if can go up, if its moving off the board, or there's a
 					// free spot above
 					if((y == N-1) || (board[y+1][x] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.UP));
+						move=new Move(x,y,Move.Direction.UP);
+						possibleMoves.add(move);
 					}
 					// if can go right
 					if((x != N-1) && (board[y][x+1] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.RIGHT));
+						move=new Move(x,y,Move.Direction.RIGHT);
+						possibleMoves.add(move);
 					}
 					
 					// if can go left
 					if((x != 0) && (board[y][x-1] == '+')) {
-						possibleMoves.add(new Move(y,x,Move.Direction.LEFT));
+						move=new Move(x,y,Move.Direction.LEFT);
+						possibleMoves.add(move);
 					}
 					
 				}
@@ -230,15 +345,24 @@ public class KatsuCat implements SliderPlayer{
 	public int evaluation(char[][] board) {
 		/* if H is the player, then the value stays the same,
 		 * or else its the opposite */
+		int distanceWeight = 4; 
+		int blockedWeight = 2;
+		int tokenWeight = (board.length-1)*distanceWeight+blockedWeight;
+		
+		if(numPlayerTokens==1){
+			//last token! - get off the board!
+			tokenWeight = maxInt;
+		}
+		
 		if(katsuPlayer == 'H') {
-			return distanceEvaluation(board)
-					+ blockedEvaluation(board)
-					+ numTokens(board);
+			return distanceWeight*distanceEvaluation(board)
+					+ blockedWeight*blockedEvaluation(board)
+					+ tokenWeight*numTokens(board);
 		}
 		else {
-			return -(distanceEvaluation(board)
-					+ blockedEvaluation(board)
-					+ numTokens(board));
+			return -(distanceWeight*distanceEvaluation(board)
+					+ blockedWeight*blockedEvaluation(board)
+					+ tokenWeight*numTokens(board));
 		}
 		
 	}
@@ -287,6 +411,7 @@ public class KatsuCat implements SliderPlayer{
 			for(int x = 0; x < N; x ++) {
 				/* increments the value by H's x position*/
 				if(board[y][x] == 'H') {
+					
 					value += x;
 				}
 				/* decrements the value by V's y position */
@@ -306,19 +431,27 @@ public class KatsuCat implements SliderPlayer{
 	 * @return the number of tokens evaluation w/r/t H
 	 */
 	private int numTokens(char[][] board) {
-		int value = 0; 
+		int numH = 0;
+		int numV = 0;
 		/* calculates the evaluation for H */
 		for(int y = 0; y < N; y ++) {
 			for(int x = 0; x < N; x ++) {
 				if(board[y][x] == 'H') {
-					value --;
+					numH++;
 				}
 				else if(board[y][x] == 'V') {
-					value ++;
+					numV++;
 				}
 			}
 		}
-		return value;
+		
+		if(katsuPlayer=='H'){
+			numPlayerTokens = numH;
+		}else{
+			numPlayerTokens = numV;
+		}
+		
+		return numV-numH;
 	}
 	
 	
