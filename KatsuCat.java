@@ -141,16 +141,27 @@ public class KatsuCat implements SliderPlayer{
 		ArrayList<PossibleState> katsuPlayerMoves;
 		// looking at first depth only currently
 		// expand parent
-		katsuPlayerMoves = expand(parent); 
+		System.out.println("katsuPlayer: "+katsuPlayer);
+		System.out.println("moves");
+		katsuPlayerMoves = expand(parent, katsuPlayer); 
 		
 		// for each katsuPlayer move, look at its 
 		for(PossibleState katsuMove: katsuPlayerMoves) {
 			//System.out.println("possible moves player "+katsuPlayer+ " can"
 				///	+ "make is : "+katsuMove.move.toString());
-			ArrayList<PossibleState> opponentMoves = expand(katsuMove);
+			System.out.println(katsuPlayer+" "+ katsuMove.move.toString());
+			System.out.println("---------------------------");
+			ArrayList<PossibleState> opponentMoves = expand(katsuMove,opponent);
+			
+			if(!opponentMoves.isEmpty()) {
+				katsuMove.value = opponentMoves.get(0).value;
+			}
+			
 			for(PossibleState opponentMove: opponentMoves) {
+				System.out.println(opponent + " "+ opponentMove.move.toString()+", value: "+opponentMove.value);
 				if(opponentMove.value < katsuMove.value) {					
 					katsuMove.value = opponentMove.value;
+					System.out.println("min value updated!");
 				}
 			}
 		}
@@ -160,8 +171,10 @@ public class KatsuCat implements SliderPlayer{
 			// just for now, pretend that the first move is the
 			// best till we find a better one
 			currMax = katsuPlayerMoves.get(0).value;
+			System.out.println("currMax: "+currMax);
 			bestMove = katsuPlayerMoves.get(0).move;
 			for(PossibleState katsuMove: katsuPlayerMoves) {
+				System.out.println("value: "+katsuMove.value);
 				if(katsuMove.value > currMax) {
 					if(sameMove(prev2,katsuMove.move)){
 						repeatedMove = katsuMove.move;
@@ -174,11 +187,14 @@ public class KatsuCat implements SliderPlayer{
 			
 			//only repeat a move if you have no other choice
 			if(bestMove==null){
+				System.out.println("repeating a move...");
 				bestMove = repeatedMove;
 			}
 			
 			// update the board to reflect the move your about to make
 			//System.out.println("best move is ... "+bestMove.toString());
+			System.out.println("updating board...");
+			System.out.println("currMax: "+currMax);
 			katsuBoard = updateBoard(katsuBoard, bestMove, katsuPlayer);
 		//	printBoard(katsuBoard);
 			prev2=prev;
@@ -193,13 +209,13 @@ public class KatsuCat implements SliderPlayer{
 		
 	}
 	
-	public ArrayList<PossibleState> expand(PossibleState parent){
-		ArrayList<Move> possibleMoves = findMoves(parent.board);
+	public ArrayList<PossibleState> expand(PossibleState parent, char player){
+		ArrayList<Move> possibleMoves = findMoves(parent.board, player);
 		
 		for(Move m: possibleMoves) {
 			char[][] newBoard = copyBoard(parent.board);
 			
-			newBoard = updateBoard(newBoard, m, katsuPlayer);
+			newBoard = updateBoard(newBoard, m, player);
 			int val = evaluation(newBoard);
 			
 		
@@ -251,14 +267,14 @@ public class KatsuCat implements SliderPlayer{
 		return false;
 	}
 	
-	public ArrayList<Move> findMoves(char[][] board) {
+	public ArrayList<Move> findMoves(char[][] board, char player) {
 		ArrayList<Move> possibleMoves = new ArrayList<Move>();
 		Move move;
 		for(int y = 0; y < N; y++) {
 			for(int x = 0; x < N; x++) {
 				
 								
-				if(board[y][x] == 'H' && katsuPlayer == 'H') {
+				if(board[y][x] == 'H' && player == 'H') {
 					// it can go up, right, down
 					//System.out.println("found h");
 					// if can go up
@@ -278,7 +294,7 @@ public class KatsuCat implements SliderPlayer{
 						possibleMoves.add(move);
 					}
 				}
-				else if(board[y][x] == 'V'  && katsuPlayer == 'V'){
+				else if(board[y][x] == 'V'  && player == 'V'){
 					// it can go up, right, left
 					//System.out.println("found v");
 					// if can go up, if its moving off the board, or there's a
@@ -319,13 +335,13 @@ public class KatsuCat implements SliderPlayer{
 	public int evaluation(char[][] board) {
 		/* if H is the player, then the value stays the same,
 		 * or else its the opposite */
-		int distanceWeight = 4; 
-		int blockedWeight = 2;
+		int distanceWeight = board.length; 
+		int blockedWeight = board.length;
 		int tokenWeight = (board.length-1)*distanceWeight+blockedWeight;
 		
-		if(numPlayerTokens==1){
-			//last token! - get off the board!
-			tokenWeight = maxInt;
+		if(numPlayerTokens==0){
+			//win game!
+			return maxInt;
 		}
 		
 		if(katsuPlayer == 'H') {
