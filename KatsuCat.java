@@ -13,6 +13,7 @@ public class KatsuCat implements SliderPlayer{
 	private int numPlayerTokens;
 	private Move prev; //the last move this player made
 	private Move prev2; //the second last move this player made
+	public final static int maxInt = 2147483647;
 	
 	
 	public KatsuCat() {
@@ -133,7 +134,8 @@ public class KatsuCat implements SliderPlayer{
 	@Override
 	public Move move() {
 		int currMax;
-		Move bestMove;
+		Move bestMove = null;
+		Move repeatedMove = null;
 		int val = evaluation(katsuBoard);
 		PossibleState parent = new PossibleState(val, katsuBoard, null);
 		ArrayList<PossibleState> katsuPlayerMoves;
@@ -147,7 +149,7 @@ public class KatsuCat implements SliderPlayer{
 				///	+ "make is : "+katsuMove.move.toString());
 			ArrayList<PossibleState> opponentMoves = expand(katsuMove);
 			for(PossibleState opponentMove: opponentMoves) {
-				if(opponentMove.value < katsuMove.value) {
+				if(opponentMove.value < katsuMove.value) {					
 					katsuMove.value = opponentMove.value;
 				}
 			}
@@ -161,20 +163,30 @@ public class KatsuCat implements SliderPlayer{
 			bestMove = katsuPlayerMoves.get(0).move;
 			for(PossibleState katsuMove: katsuPlayerMoves) {
 				if(katsuMove.value > currMax) {
-					currMax = katsuMove.value;
-					bestMove = katsuMove.move;
+					if(sameMove(prev2,katsuMove.move)){
+						repeatedMove = katsuMove.move;
+					}else{
+						currMax = katsuMove.value;
+						bestMove = katsuMove.move;
+					}
 				}
 			}
+			
+			//only repeat a move if you have no other choice
+			if(bestMove==null){
+				bestMove = repeatedMove;
+			}
+			
 			// update the board to reflect the move your about to make
 			//System.out.println("best move is ... "+bestMove.toString());
 			katsuBoard = updateBoard(katsuBoard, bestMove, katsuPlayer);
 		//	printBoard(katsuBoard);
 			prev2=prev;
 			prev=bestMove;
-			return bestMove;
 			
 		}
-		return null;
+		
+		return bestMove;
 		
 		// find the most profitable move
 		
@@ -252,24 +264,18 @@ public class KatsuCat implements SliderPlayer{
 					// if can go up
 					if((y != N-1) && (board[y+1][x] == '+')) {
 						move=new Move(x,y,Move.Direction.UP);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 					// if can go right
 					if((x == N-1) || (board[y][x+1] == '+')) {
 						move=new Move(x,y,Move.Direction.RIGHT);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 						
 					// if can go down
 					if((y != 0) && (board[y-1][x] == '+')) {
 						move=new Move(x,y,Move.Direction.DOWN);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 				}
 				else if(board[y][x] == 'V'  && katsuPlayer == 'V'){
@@ -279,24 +285,18 @@ public class KatsuCat implements SliderPlayer{
 					// free spot above
 					if((y == N-1) || (board[y+1][x] == '+')) {
 						move=new Move(x,y,Move.Direction.UP);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 					// if can go right
 					if((x != N-1) && (board[y][x+1] == '+')) {
 						move=new Move(x,y,Move.Direction.RIGHT);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 					
 					// if can go left
 					if((x != 0) && (board[y][x-1] == '+')) {
 						move=new Move(x,y,Move.Direction.LEFT);
-						if(!sameMove(move,prev2)){
-							possibleMoves.add(move);
-						}
+						possibleMoves.add(move);
 					}
 					
 				}
@@ -319,13 +319,13 @@ public class KatsuCat implements SliderPlayer{
 	public int evaluation(char[][] board) {
 		/* if H is the player, then the value stays the same,
 		 * or else its the opposite */
-		int distanceWeight = 4; //12+9+6+4//9+6+12
+		int distanceWeight = 4; 
 		int blockedWeight = 2;
 		int tokenWeight = (board.length-1)*distanceWeight+blockedWeight;
 		
 		if(numPlayerTokens==1){
 			//last token! - get off the board!
-			tokenWeight = (board.length-1)*distanceWeight+1000;
+			tokenWeight = maxInt;
 		}
 		
 		if(katsuPlayer == 'H') {
